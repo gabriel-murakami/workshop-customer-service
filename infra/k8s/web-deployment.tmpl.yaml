@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  namespace: workshop
+  labels:
+    app: web
+    tags.datadoghq.com/service: workshop-customer-service
+    tags.datadoghq.com/env: development
+    tags.datadoghq.com/version: "1.0.0"
+spec:
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        tags.datadoghq.com/service: workshop-customer-service
+        tags.datadoghq.com/env: development
+        tags.datadoghq.com/version: "1.0.0"
+      annotations:
+        ad.datadoghq.com/web.logs: |
+          [
+            {
+              "source": "ruby",
+              "service": "workshop-customer-service"
+            }
+          ]
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: web
+          image: "${IMAGE_URI}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          env:
+            - name: DD_TRACE_HTTP_CLIENT_IGNORE_URLS
+              value: "/up"
+            - name: INTERNAL_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: INTERNAL_AUTH_TOKEN
+            - name: DD_TRACE_ENABLED
+              value: "true"
+            - name: DD_AGENT_HOST
+              value: datadog-agent
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+            - name: DD_TRACE_HTTP_CLIENT_IGNORE_URLS
+              value: "/up"
+            - name: RAILS_LOG_TO_STDOUT
+              value: "true"
+            - name: UID
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: UID
+            - name: GID
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: GID
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: DATABASE_HOST
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: DATABASE_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: JWT_SECRET
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: SMTP_USERNAME
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: SMTP_PASSWORD
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: SECRET_KEY_BASE
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 60
+      restartPolicy: Always

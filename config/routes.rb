@@ -1,10 +1,26 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  unless Rails.env.production?
+    mount Rswag::Ui::Engine => "/api-docs"
+    mount Rswag::Api::Engine => "/api-docs"
+  end
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
+  # Health Check
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  scope module: "web" do
+    scope module: "controllers" do
+      namespace :api do
+        scope controller: :customers do
+          resources :customers, only: %i[index create update destroy]
+          get "customers/:document_number", action: :show
+          patch "customers/:document_number/add_vehicle", action: :add_vehicle
+        end
+
+        scope controller: :vehicles do
+          resources :vehicles, only: %i[index create update destroy]
+          get "vehicles/:license_plate", action: :show
+        end
+      end
+    end
+  end
 end
