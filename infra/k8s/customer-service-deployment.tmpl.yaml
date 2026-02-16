@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-deployment
+  name: customer-service-deployment
   namespace: workshop
   labels:
     app: customer-service
@@ -39,11 +39,6 @@ spec:
           env:
             - name: DD_TRACE_HTTP_CLIENT_IGNORE_URLS
               value: "/up"
-            - name: INTERNAL_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: web-secret
-                  key: INTERNAL_AUTH_TOKEN
             - name: DD_TRACE_ENABLED
               value: "true"
             - name: DD_AGENT_HOST
@@ -91,21 +86,6 @@ spec:
                 secretKeyRef:
                   name: web-secret
                   key: DATABASE_PASSWORD
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: web-secret
-                  key: JWT_SECRET
-            - name: SMTP_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: web-secret
-                  key: SMTP_USERNAME
-            - name: SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: web-secret
-                  key: SMTP_PASSWORD
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:
