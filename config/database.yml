@@ -8,14 +8,14 @@ default: &default
 
 development:
   <<: *default
-  database: workshop_customer_service_development
+  database: customer_service_development
 
 test:
   <<: *default
-  database: workshop_customer_service_test
+  database: customer_service_test
 
 production:
   <<: *default
-  database: workshop_customer_service_production
+  database: customer_service_production
   username: <%= ENV["DATABASE_USERNAME"] %>
   password: <%= ENV["DATABASE_PASSWORD"] %>
